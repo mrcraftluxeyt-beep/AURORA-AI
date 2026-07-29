@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AURORA — AI Assistant</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <div class="app">
+        <!-- Боковая панель настроек -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>🌌 AURORA</h1>
+                <p class="subtitle">AI Assistant</p>
+            </div>
+            <div class="settings">
+                <div class="setting-group">
+                    <label for="apiKey">🔑 API Key</label>
+                    <input type="password" id="apiKey" placeholder="Вставьте ключ Gemini..." />
+                    <button class="btn-save" id="saveKeyBtn">Сохранить</button>
+                </div>
+                <div class="setting-group">
+                    <label for="modelSelect">🤖 Модель</label>
+                    <select id="modelSelect">
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
+                        <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="temperature">🎚️ Температура</label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" />
+                    <span id="tempValue">0.7</span>
+                </div>
+                <button class="btn-clear" id="clearChatBtn">🗑️ Очистить чат</button>
+                <div class="status" id="status">
+                    <span class="dot"></span>
+                    <span id="statusText">Готов к работе</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Основная область чата -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <button class="menu-toggle" id="menuToggle">☰</button>
+                <h2>AURORA</h2>
+                <span class="model-badge" id="modelBadge">Gemini 1.5 Flash</span>
+            </header>
+
+            <div class="messages" id="messages">
+                <div class="message bot">
+                    <div class="avatar">🌌</div>
+                    <div class="bubble">
+                        <p>Привет! Я AURORA. Вставьте ваш API-ключ в настройках слева и начните общение ✨</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea id="userInput" rows="1" placeholder="Спросите AURORA..."></textarea>
+                <button id="sendBtn">➤</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
