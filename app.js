@@ -3,7 +3,7 @@
 // ============================================================
 const CONFIG = {
     // === ВАШ API-ЭНДПОИНТ ===
-    apiUrl: 'https://apifreellm.com/api/v1/chat',
+    apiUrl: 'https://cors-anywhere.herokuapp.com/https://apifreellm.com/api/v1/chat',
     
     // === ВАШ API-КЛЮЧ ===
     apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',
