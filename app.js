@@ -3,7 +3,7 @@
 // ============================================================
 const CONFIG = {
     // === ВАШ API ===
-    apiUrl: 'https://api.freellm.xyz/v1/chat/completions',
+    apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev/',
     apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',
     defaultModel: 'gemini-1.5-flash',
     temperature: 0.7,
