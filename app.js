@@ -3,10 +3,10 @@
 // ============================================================
 const CONFIG = {
     // === ВАШ API-ЭНДПОИНТ (FreeLLM или другой) ===
-    apiUrl: 'https://free-llm-api.onrender.com/v1/chat/completions',
+    apiUrl: 'https://apifreellm.com/api/v1/chat',
 
     // === ВАШ API-КЛЮЧ (если нужен) ===
-    apiKey: 'sk-your-secret-key-here',  // <-- ВСТАВЬТЕ СВОЙ КЛЮЧ
+    apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',  // <-- ВСТАВЬТЕ СВОЙ КЛЮЧ
 
     // === МОДЕЛЬ ПО УМОЛЧАНИЮ ===
     defaultModel: 'gemini-1.5-flash',
