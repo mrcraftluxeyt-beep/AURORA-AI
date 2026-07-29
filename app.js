@@ -1,16 +1,16 @@
 // ============================================================
-//  ⚙️  КОНФИГУРАЦИЯ — ЗДЕСЬ ВАШ API !
+//  ⚙️  КОНФИГУРАЦИЯ — ВАШ API
 // ============================================================
 const CONFIG = {
-    // === ВАШ API-ЭНДПОИНТ (FreeLLM или другой) ===
+    // === ВАШ API-ЭНДПОИНТ ===
     apiUrl: 'https://apifreellm.com/api/v1/chat',
-
-    // === ВАШ API-КЛЮЧ (если нужен) ===
-    apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',  // <-- ВСТАВЬТЕ СВОЙ КЛЮЧ
-
+    
+    // === ВАШ API-КЛЮЧ ===
+    apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',
+    
     // === МОДЕЛЬ ПО УМОЛЧАНИЮ ===
     defaultModel: 'gemini-1.5-flash',
-
+    
     // === ПАРАМЕТРЫ ===
     temperature: 0.7,
     maxTokens: 2048,
@@ -63,7 +63,9 @@ function init() {
 
     updateStatus('Готов');
     bindEvents();
-    console.log('🚀 AURORA запущена! API:', CONFIG.apiUrl);
+    console.log('🚀 AURORA запущена!');
+    console.log('📡 API:', CONFIG.apiUrl);
+    console.log('🔑 Ключ:', CONFIG.apiKey ? '✅ Установлен' : '❌ Отсутствует');
 }
 
 // ============================================================
@@ -127,13 +129,13 @@ async function sendMessage() {
         saveHistory();
         updateStatus('Готов');
     } catch (err) {
+        console.error('❌ Ошибка:', err);
         state.messages.push({
             role: 'assistant',
             content: `⚠️ Ошибка: ${err.message || 'Неизвестная ошибка'}`,
         });
         renderMessages();
         updateStatus('❌ Ошибка', 'error');
-        console.error('AI error:', err);
     } finally {
         dom.sendBtn.disabled = false;
         state.isProcessing = false;
@@ -142,63 +144,68 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  🔥 ВЫЗОВ ВАШЕГО API (FreeLLM)
+//  🔥 ВЫЗОВ ВАШЕГО API
 // ============================================================
 async function callAI(userMessage) {
     const model = dom.modelSelect.value;
     const temp = parseFloat(dom.temperature.value);
 
-    // Формируем историю для контекста
-    const history = state.messages.map(msg => ({
+    // Формируем историю (последние 20 сообщений для контекста)
+    const history = state.messages.slice(-20).map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content,
     }));
 
-    // Если сообщений слишком много — обрезаем (чтобы не переполнять контекст)
-    const maxHistory = 20;
-    const trimmedHistory = history.slice(-maxHistory);
-
+    // Пробуем разные форматы payload (если один не работает)
     const payload = {
         model: model,
-        messages: trimmedHistory,
+        messages: history,
         temperature: temp,
         max_tokens: CONFIG.maxTokens,
         stream: false,
     };
 
-    const headers = {
-        'Content-Type': 'application/json',
-    };
+    console.log('📤 Отправка запроса на:', CONFIG.apiUrl);
+    console.log('📦 Payload:', JSON.stringify(payload, null, 2));
 
-    // Если есть ключ — добавляем
-    if (CONFIG.apiKey && CONFIG.apiKey !== 'sk-your-secret-key-here') {
-        headers['Authorization'] = `Bearer ${CONFIG.apiKey}`;
-    }
-
-    const resp = await fetch(CONFIG.apiUrl, {
+    const response = await fetch(CONFIG.apiUrl, {
         method: 'POST',
-        headers: headers,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${CONFIG.apiKey}`,
+        },
         body: JSON.stringify(payload),
     });
 
-    if (!resp.ok) {
-        let errMsg = `HTTP ${resp.status}`;
-        try {
-            const errData = await resp.json();
-            errMsg = errData.error?.message || errMsg;
-        } catch (_) {}
-        throw new Error(errMsg);
+    console.log('📊 Статус ответа:', response.status);
+
+    // Пробуем прочитать ответ (даже если ошибка)
+    const responseText = await response.text();
+    console.log('📄 Ответ сервера:', responseText);
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
     }
 
-    const data = await resp.json();
+    let data;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        throw new Error('Невалидный JSON от сервера: ' + responseText.substring(0, 100));
+    }
 
-    // Поддержка разных форматов ответа
+    console.log('📥 Распарсенный ответ:', data);
+
+    // Парсим ответ (пробуем разные форматы)
     let result = data.choices?.[0]?.message?.content;
     if (!result) {
         result = data.candidates?.[0]?.content?.parts?.[0]?.text;
     }
     if (!result) {
-        result = data.response || data.text || 'Пустой ответ от модели';
+        result = data.response || data.text || data.result || data.message;
+    }
+    if (!result) {
+        result = '⚠️ Пустой ответ от модели. Проверьте формат API.';
     }
 
     return result;
@@ -214,7 +221,7 @@ function saveHistory() {
 }
 
 // ============================================================
-//  УПРАВЛЕНИЕ СТАТУСОМ
+//  СТАТУС
 // ============================================================
 function updateStatus(text, type = '') {
     dom.statusText.textContent = text;
@@ -282,6 +289,6 @@ function bindEvents() {
 }
 
 // ============================================================
-//  СТАРТ
+//  ЗАПУСК
 // ============================================================
 document.addEventListener('DOMContentLoaded', init);
