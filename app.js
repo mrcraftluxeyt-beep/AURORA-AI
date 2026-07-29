@@ -2,9 +2,8 @@
 //  ⚙️  КОНФИГУРАЦИЯ
 // ============================================================
 const CONFIG = {
-    // === ВАШ API ===
-    apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev/',
-    apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',
+    apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev', // ВАШ URL Worker
+    apiKey: '',
     defaultModel: 'gemini-1.5-flash',
     temperature: 0.7,
     maxTokens: 2048,
@@ -21,7 +20,7 @@ const state = {
 };
 
 // ============================================================
-//  DOM-ЭЛЕМЕНТЫ
+//  DOM
 // ============================================================
 const dom = {
     messages: document.getElementById('messages'),
@@ -62,7 +61,7 @@ function init() {
 }
 
 // ============================================================
-//  ОТОБРАЖЕНИЕ СООБЩЕНИЙ
+//  ОТОБРАЖЕНИЕ
 // ============================================================
 function renderMessages() {
     dom.messages.innerHTML = '';
@@ -102,7 +101,7 @@ function scrollToBottom() {
 }
 
 // ============================================================
-//  ОТПРАВКА СООБЩЕНИЯ
+//  ОТПРАВКА
 // ============================================================
 async function sendMessage() {
     const text = dom.userInput.value.trim();
@@ -137,118 +136,58 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  🔥 ВЫЗОВ API (С ОБХОДОМ CORS)
+//  🔥 ВЫЗОВ ЧЕРЕЗ CLOUDFLARE WORKER
 // ============================================================
 async function callAI(userMessage) {
-    const model = dom.modelSelect.value;
-    const temp = parseFloat(dom.temperature.value);
-
-    const history = state.messages.slice(-20).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
-    }));
-
+    // === ВАЖНО: ваш API принимает только { "message": "текст" } ===
     const payload = {
-        model: model,
-        messages: history,
-        temperature: temp,
-        max_tokens: CONFIG.maxTokens,
-        stream: false,
+        message: userMessage
     };
 
-    console.log('📤 Отправка запроса...');
+    console.log('📤 Отправка:', JSON.stringify(payload, null, 2));
 
-    // === СПОСОБ 1: Через прокси-сервис (работает всегда) ===
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
-    const targetUrl = CONFIG.apiUrl;
-    
-    try {
-        // Пробуем через прокси
-        const response = await fetch(`${proxyUrl}${encodeURIComponent(targetUrl)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
+    const response = await fetch(CONFIG.apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+    const responseText = await response.text();
+    console.log('📊 Статус:', response.status);
+    console.log('📄 Ответ:', responseText);
 
-        const data = await response.json();
-        console.log('📥 Ответ получен:', data);
-
-        let result = data.choices?.[0]?.message?.content;
-        if (!result) result = data.response || data.text || data.result;
-        if (!result) result = '⚠️ Пустой ответ от модели';
-        
-        return result;
-
-    } catch (proxyError) {
-        console.warn('⚠️ Прокси не сработал, пробуем прямой запрос...', proxyError.message);
-        
-        // === СПОСОБ 2: Прямой запрос (если CORS разрешён) ===
+    if (!response.ok) {
+        let errorMsg = `HTTP ${response.status}`;
         try {
-            const response = await fetch(CONFIG.apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${CONFIG.apiKey}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
-            }
-
-            const data = await response.json();
-            console.log('📥 Ответ получен (прямой запрос):', data);
-
-            let result = data.choices?.[0]?.message?.content;
-            if (!result) result = data.response || data.text || data.result;
-            if (!result) result = '⚠️ Пустой ответ от модели';
-            
-            return result;
-
-        } catch (directError) {
-            console.error('❌ Прямой запрос тоже не сработал:', directError);
-            
-            // === СПОСОБ 3: Последняя надежда - другой прокси ===
-            try {
-                const corsProxy = 'https://corsproxy.io/?';
-                const response = await fetch(`${corsProxy}${encodeURIComponent(targetUrl)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('📥 Ответ получен (corsproxy):', data);
-
-                let result = data.choices?.[0]?.message?.content;
-                if (!result) result = data.response || data.text || data.result;
-                if (!result) result = '⚠️ Пустой ответ от модели';
-                
-                return result;
-
-            } catch (finalError) {
-                throw new Error(`Не удалось подключиться к API. Проверьте интернет и URL.\nОшибка: ${finalError.message}`);
-            }
-        }
+            const data = JSON.parse(responseText);
+            errorMsg = data.error || data.details || data.message || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
     }
+
+    const data = JSON.parse(responseText);
+    console.log('📥 Распарсенный ответ:', data);
+
+    // === ПАРСИМ ОТВЕТ ВАШЕГО API ===
+    // Ваш API возвращает: { "success": true, "response": "текст", ... }
+    let result = data.response;
+    if (!result) {
+        result = data.choices?.[0]?.message?.content;
+    }
+    if (!result) {
+        result = data.text || data.result || data.message;
+    }
+    if (!result) {
+        result = '⚠️ Пустой ответ от модели';
+    }
+    
+    return result;
 }
 
 // ============================================================
-//  СОХРАНЕНИЕ ИСТОРИИ
+//  СОХРАНЕНИЕ
 // ============================================================
 function saveHistory() {
     try {
