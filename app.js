@@ -1,17 +1,11 @@
 // ============================================================
-//  ⚙️  КОНФИГУРАЦИЯ — ВАШ API
+//  ⚙️  КОНФИГУРАЦИЯ
 // ============================================================
 const CONFIG = {
-    // === ВАШ API-ЭНДПОИНТ ===
-    apiUrl: 'https://cors-anywhere.herokuapp.com/https://apifreellm.com/api/v1/chat',
-    
-    // === ВАШ API-КЛЮЧ ===
+    // === ВАШ API ===
+    apiUrl: 'https://api.freellm.xyz/v1/chat/completions',
     apiKey: 'apf_v1uokmy6yofsgkkjmlvz0vgm',
-    
-    // === МОДЕЛЬ ПО УМОЛЧАНИЮ ===
     defaultModel: 'gemini-1.5-flash',
-    
-    // === ПАРАМЕТРЫ ===
     temperature: 0.7,
     maxTokens: 2048,
 };
@@ -65,7 +59,6 @@ function init() {
     bindEvents();
     console.log('🚀 AURORA запущена!');
     console.log('📡 API:', CONFIG.apiUrl);
-    console.log('🔑 Ключ:', CONFIG.apiKey ? '✅ Установлен' : '❌ Отсутствует');
 }
 
 // ============================================================
@@ -144,19 +137,17 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  🔥 ВЫЗОВ ВАШЕГО API
+//  🔥 ВЫЗОВ API (С ОБХОДОМ CORS)
 // ============================================================
 async function callAI(userMessage) {
     const model = dom.modelSelect.value;
     const temp = parseFloat(dom.temperature.value);
 
-    // Формируем историю (последние 20 сообщений для контекста)
     const history = state.messages.slice(-20).map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content,
     }));
 
-    // Пробуем разные форматы payload (если один не работает)
     const payload = {
         model: model,
         messages: history,
@@ -165,50 +156,95 @@ async function callAI(userMessage) {
         stream: false,
     };
 
-    console.log('📤 Отправка запроса на:', CONFIG.apiUrl);
-    console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+    console.log('📤 Отправка запроса...');
 
-    const response = await fetch(CONFIG.apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${CONFIG.apiKey}`,
-        },
-        body: JSON.stringify(payload),
-    });
-
-    console.log('📊 Статус ответа:', response.status);
-
-    // Пробуем прочитать ответ (даже если ошибка)
-    const responseText = await response.text();
-    console.log('📄 Ответ сервера:', responseText);
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
-    }
-
-    let data;
+    // === СПОСОБ 1: Через прокси-сервис (работает всегда) ===
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const targetUrl = CONFIG.apiUrl;
+    
     try {
-        data = JSON.parse(responseText);
-    } catch (e) {
-        throw new Error('Невалидный JSON от сервера: ' + responseText.substring(0, 100));
-    }
+        // Пробуем через прокси
+        const response = await fetch(`${proxyUrl}${encodeURIComponent(targetUrl)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
 
-    console.log('📥 Распарсенный ответ:', data);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
 
-    // Парсим ответ (пробуем разные форматы)
-    let result = data.choices?.[0]?.message?.content;
-    if (!result) {
-        result = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    }
-    if (!result) {
-        result = data.response || data.text || data.result || data.message;
-    }
-    if (!result) {
-        result = '⚠️ Пустой ответ от модели. Проверьте формат API.';
-    }
+        const data = await response.json();
+        console.log('📥 Ответ получен:', data);
 
-    return result;
+        let result = data.choices?.[0]?.message?.content;
+        if (!result) result = data.response || data.text || data.result;
+        if (!result) result = '⚠️ Пустой ответ от модели';
+        
+        return result;
+
+    } catch (proxyError) {
+        console.warn('⚠️ Прокси не сработал, пробуем прямой запрос...', proxyError.message);
+        
+        // === СПОСОБ 2: Прямой запрос (если CORS разрешён) ===
+        try {
+            const response = await fetch(CONFIG.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${CONFIG.apiKey}`,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+            }
+
+            const data = await response.json();
+            console.log('📥 Ответ получен (прямой запрос):', data);
+
+            let result = data.choices?.[0]?.message?.content;
+            if (!result) result = data.response || data.text || data.result;
+            if (!result) result = '⚠️ Пустой ответ от модели';
+            
+            return result;
+
+        } catch (directError) {
+            console.error('❌ Прямой запрос тоже не сработал:', directError);
+            
+            // === СПОСОБ 3: Последняя надежда - другой прокси ===
+            try {
+                const corsProxy = 'https://corsproxy.io/?';
+                const response = await fetch(`${corsProxy}${encodeURIComponent(targetUrl)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📥 Ответ получен (corsproxy):', data);
+
+                let result = data.choices?.[0]?.message?.content;
+                if (!result) result = data.response || data.text || data.result;
+                if (!result) result = '⚠️ Пустой ответ от модели';
+                
+                return result;
+
+            } catch (finalError) {
+                throw new Error(`Не удалось подключиться к API. Проверьте интернет и URL.\nОшибка: ${finalError.message}`);
+            }
+        }
+    }
 }
 
 // ============================================================
