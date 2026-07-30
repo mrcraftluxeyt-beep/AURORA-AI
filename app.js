@@ -1,5 +1,5 @@
 // ============================================================
-//  AURORA — С GOOGLE ВХОДОМ И reCAPTCHA
+//  AURORA — С ОТПРАВКОЙ EMAIL
 // ============================================================
 
 const CONFIG = {
@@ -16,7 +16,67 @@ const state = {
     temperature: parseFloat(localStorage.getItem('aurora_temp')) || CONFIG.temperature,
     messages: [],
     isProcessing: false,
+    pendingEmail: null,
 };
+
+// ============================================================
+//  ОТПРАВКА КОДА НА EMAIL
+// ============================================================
+async function sendCodeToEmail(email) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    state.pendingEmail = email;
+    
+    try {
+        const response = await fetch('/send-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Сохраняем код для проверки
+            localStorage.setItem('verification_code', code);
+            localStorage.setItem('verification_email', email);
+            
+            const authStatus = document.getElementById('authStatus');
+            authStatus.innerHTML = `✅ Код отправлен на ${email}`;
+            authStatus.style.color = '#4ade80';
+            
+            document.getElementById('codeSection').style.display = 'flex';
+            document.getElementById('sendCodeBtn').disabled = true;
+            document.getElementById('sendCodeBtn').textContent = 'Код отправлен';
+            
+            console.log(`📧 Код ${code} отправлен на ${email}`);
+        } else {
+            throw new Error(data.error || 'Ошибка отправки');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка:', error);
+        const authStatus = document.getElementById('authStatus');
+        authStatus.textContent = '❌ Не удалось отправить код. Попробуйте позже.';
+        authStatus.style.color = '#f87171';
+    }
+}
+
+// ============================================================
+//  ПРОВЕРКА reCAPTCHA
+// ============================================================
+async function verifyRecaptcha(token) {
+    try {
+        const response = await fetch('/verify-recaptcha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        });
+        const data = await response.json();
+        return data.success === true;
+    } catch (error) {
+        console.error('Ошибка проверки reCAPTCHA:', error);
+        return false;
+    }
+}
 
 // ============================================================
 //  ПРОВЕРКА АВТОРИЗАЦИИ
@@ -80,30 +140,14 @@ function logoutUser() {
     document.getElementById('emailInput').value = '';
     document.getElementById('codeInput').value = '';
     
-    // Сброс reCAPTCHA
     if (window.grecaptcha) {
         grecaptcha.reset();
     }
 }
 
 // ============================================================
-//  EMAIL + КОД
+//  ПРОВЕРКА КОДА
 // ============================================================
-function sendVerificationCode(email) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    localStorage.setItem('verification_code', code);
-    localStorage.setItem('verification_email', email);
-
-    const authStatus = document.getElementById('authStatus');
-    authStatus.innerHTML = `✅ Код отправлен на ${email}<br><span style="font-size:24px;color:#a78bfa;">${code}</span>`;
-    authStatus.style.color = '#4ade80';
-    
-    document.getElementById('codeSection').style.display = 'flex';
-    const sendCodeBtn = document.getElementById('sendCodeBtn');
-    sendCodeBtn.disabled = true;
-    sendCodeBtn.textContent = 'Код отправлен';
-}
-
 function verifyCode(inputCode) {
     const savedCode = localStorage.getItem('verification_code');
     const email = localStorage.getItem('verification_email');
@@ -197,7 +241,7 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  🔥 ВЫЗОВ API
+//  ВЫЗОВ API
 // ============================================================
 async function callAI(userMessage) {
     const payload = { message: userMessage };
@@ -264,15 +308,33 @@ function bindEvents() {
     });
 
     // Email форма
-    document.getElementById('emailForm').addEventListener('submit', (e) => {
+    document.getElementById('emailForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
         const email = document.getElementById('emailInput').value.trim();
         if (!email) {
             document.getElementById('authStatus').textContent = '❌ Введите email';
             document.getElementById('authStatus').style.color = '#f87171';
             return;
         }
-        sendVerificationCode(email);
+
+        // Проверяем reCAPTCHA
+        const recaptchaToken = grecaptcha.getResponse();
+        if (!recaptchaToken) {
+            document.getElementById('authStatus').textContent = '❌ Подтвердите, что вы не робот';
+            document.getElementById('authStatus').style.color = '#f87171';
+            return;
+        }
+
+        const isValid = await verifyRecaptcha(recaptchaToken);
+        if (!isValid) {
+            document.getElementById('authStatus').textContent = '❌ Ошибка проверки капчи. Попробуйте снова.';
+            document.getElementById('authStatus').style.color = '#f87171';
+            grecaptcha.reset();
+            return;
+        }
+
+        await sendCodeToEmail(email);
     });
 
     // Проверка кода
