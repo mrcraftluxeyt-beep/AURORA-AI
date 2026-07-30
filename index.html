@@ -6,9 +6,12 @@
     <title>AURORA — AI Assistant</title>
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- ⭐ Подключаем Google reCAPTCHA (Ваш Site Key) -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-    <!-- ===== СТРАНИЦА РЕГИСТРАЦИИ ===== -->
+    <!-- СТРАНИЦА РЕГИСТРАЦИИ -->
     <div class="auth-page" id="authPage">
         <div class="auth-container">
             <div class="auth-header">
@@ -16,35 +19,36 @@
                 <p>Войдите, чтобы начать общение</p>
             </div>
 
-            <!-- Форма email -->
+            <!-- КНОПКА ВХОДА ЧЕРЕЗ GOOGLE -->
+            <a href="/auth/google" class="google-btn" id="googleBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                Войти через Google
+            </a>
+
+            <div class="divider">или</div>
+
+            <!-- ФОРМА EMAIL -->
             <form id="emailForm">
                 <input type="email" id="emailInput" placeholder="Введите ваш email" required />
+                
+                <!-- ⭐ reCAPTCHA v2 (Ваш Site Key) -->
+                <div class="g-recaptcha" data-sitekey="6LfLDW0tAAAAABTnfZ1bCZgOC8K78sG15BxlVHP-"></div>
+                
                 <button type="submit" id="sendCodeBtn">Отправить код</button>
             </form>
 
-            <!-- Поле для кода -->
+            <!-- ПОЛЕ ДЛЯ КОДА -->
             <div id="codeSection" style="display:none;">
                 <input type="text" id="codeInput" placeholder="Введите 6-значный код" maxlength="6" />
                 <button id="verifyCodeBtn">Войти</button>
-            </div>
-
-            <!-- ===== КАПЧА ===== -->
-            <div class="captcha-container">
-                <label style="display:block; font-size:13px; font-weight:600; color:#c8d0e0; margin-bottom:6px;">🔒 Введите код с картинки</label>
-                <div class="captcha-box" id="captchaBox">
-                    <span id="captchaText"></span>
-                    <button type="button" id="refreshCaptcha">⟳</button>
-                </div>
-                <input type="text" id="captchaInput" placeholder="Введите код" maxlength="6" />
             </div>
 
             <div id="authStatus" class="auth-status"></div>
         </div>
     </div>
 
-    <!-- ===== ОСНОВНОЙ ЧАТ ===== -->
+    <!-- ОСНОВНОЙ ЧАТ -->
     <div class="app" id="chatApp" style="display:none;">
-        <!-- Боковая панель -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>🌌 AURORA</h1>
@@ -72,7 +76,6 @@
             </div>
         </aside>
 
-        <!-- Чат -->
         <main class="chat-area">
             <header class="chat-header">
                 <button class="menu-toggle" id="menuToggle">☰</button>
@@ -98,4 +101,4 @@
 
     <script src="app.js"></script>
 </body>
-                        </html>
+    </html>
