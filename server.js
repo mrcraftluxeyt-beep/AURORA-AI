@@ -10,7 +10,7 @@ app.use(express.static('.'));
 
 // ===== ВАШИ ДАННЫЕ =====
 const GOOGLE_CLIENT_ID = '628204875071-e8h6pvurpbpnpj4f2ntii60i9qstuk31.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = '6LfLDW0tAAAAAOLrSk9fCKiAQAb0YzxeGFlvV9DA'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ СЕКРЕТ
+const GOOGLE_CLIENT_SECRET = '6LfLDW0tAAAAABTnfZ1bCZgOC8K78sG15BxlVHP-'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ СЕКРЕТ
 const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 
 // 1. Отправляем пользователя в Google
