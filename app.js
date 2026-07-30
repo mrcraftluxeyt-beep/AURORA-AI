@@ -1,9 +1,8 @@
 // ============================================================
-//  ⚙️  КОНФИГУРАЦИЯ
+//  ⚙️  КОНФИГУРАЦИЯ — ВАШ WORKER
 // ============================================================
 const CONFIG = {
-    apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev', // ВАШ URL Worker
-    apiKey: '',
+    apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev/', // ВАШ URL
     defaultModel: 'gemini-1.5-flash',
     temperature: 0.7,
     maxTokens: 2048,
@@ -61,7 +60,7 @@ function init() {
 }
 
 // ============================================================
-//  ОТОБРАЖЕНИЕ
+//  ОТОБРАЖЕНИЕ СООБЩЕНИЙ
 // ============================================================
 function renderMessages() {
     dom.messages.innerHTML = '';
@@ -101,7 +100,7 @@ function scrollToBottom() {
 }
 
 // ============================================================
-//  ОТПРАВКА
+//  ОТПРАВКА СООБЩЕНИЯ
 // ============================================================
 async function sendMessage() {
     const text = dom.userInput.value.trim();
@@ -122,12 +121,7 @@ async function sendMessage() {
         updateStatus('Готов');
     } catch (err) {
         console.error('❌ Ошибка:', err);
-        state.messages.push({
-            role: 'assistant',
-            content: `⚠️ Ошибка: ${err.message || 'Неизвестная ошибка'}`,
-        });
-        renderMessages();
-        updateStatus('❌ Ошибка', 'error');
+        updateStatus('❌ ' + err.message, 'error');
     } finally {
         dom.sendBtn.disabled = false;
         state.isProcessing = false;
@@ -136,15 +130,14 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  🔥 ВЫЗОВ ЧЕРЕЗ CLOUDFLARE WORKER
+//  🔥 ВЫЗОВ API
 // ============================================================
 async function callAI(userMessage) {
-    // === ВАЖНО: ваш API принимает только { "message": "текст" } ===
     const payload = {
         message: userMessage
     };
 
-    console.log('📤 Отправка:', JSON.stringify(payload, null, 2));
+    console.log('📤 Отправка:', JSON.stringify(payload));
 
     const response = await fetch(CONFIG.apiUrl, {
         method: 'POST',
@@ -159,7 +152,7 @@ async function callAI(userMessage) {
     console.log('📄 Ответ:', responseText);
 
     if (!response.ok) {
-        let errorMsg = `HTTP ${response.status}`;
+        let errorMsg = `Ошибка ${response.status}`;
         try {
             const data = JSON.parse(responseText);
             errorMsg = data.error || data.details || data.message || errorMsg;
@@ -167,19 +160,20 @@ async function callAI(userMessage) {
         throw new Error(errorMsg);
     }
 
-    const data = JSON.parse(responseText);
+    let data;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        throw new Error('API вернул невалидный JSON');
+    }
+
     console.log('📥 Распарсенный ответ:', data);
 
-    // === ПАРСИМ ОТВЕТ ВАШЕГО API ===
-    // Ваш API возвращает: { "success": true, "response": "текст", ... }
-    let result = data.response;
+    // Ваш API возвращает: { "success": true, "response": "текст" }
+    let result = data.response || data.text || data.result || data.message;
+    
     if (!result) {
-        result = data.choices?.[0]?.message?.content;
-    }
-    if (!result) {
-        result = data.text || data.result || data.message;
-    }
-    if (!result) {
+        console.warn('⚠️ Не найден "response" в ответе:', data);
         result = '⚠️ Пустой ответ от модели';
     }
     
@@ -187,7 +181,7 @@ async function callAI(userMessage) {
 }
 
 // ============================================================
-//  СОХРАНЕНИЕ
+//  СОХРАНЕНИЕ ИСТОРИИ
 // ============================================================
 function saveHistory() {
     try {
