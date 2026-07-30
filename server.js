@@ -21,13 +21,22 @@ const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 const RECAPTCHA_SECRET = '6LfLDW0tAAAAAOLrSk9fCKiAQAb0YzxeGFlvV9DA';
 
 // ============================================================
-//  НАСТРОЙКА EMAIL (Gmail)
+//  НАСТРОЙКА EMAIL (ВАША ПОЧТА)
 // ============================================================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'mrcraftluxd@gmail.com',      // ← ВСТАВЬТЕ ВАШУ ПОЧТУ
-        pass: 'kjav ohbn lqel xtzd'      // ← ВСТАВЬТЕ ПАРОЛЬ ПРИЛОЖЕНИЯ
+        user: 'mrcraftluxe@gmail.com',      // ← ВАША ПОЧТА
+        pass: 'kjav ohbn lqel xtzd'         // ← ПАРОЛЬ ПРИЛОЖЕНИЯ
+    }
+});
+
+// Проверяем подключение к почте
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('❌ Ошибка подключения к почте:', error);
+    } else {
+        console.log('✅ Почта настроена!');
     }
 });
 
@@ -43,8 +52,8 @@ app.post('/send-code', async (req, res) => {
     
     try {
         // Отправляем письмо
-        await transporter.sendMail({
-            from: '"AURORA AI" <ВАША_ПОЧТА@gmail.com>',
+        const info = await transporter.sendMail({
+            from: '"🌌 AURORA AI" <mrcraftluxe@gmail.com>',
             to: email,
             subject: '🌌 Код подтверждения AURORA',
             html: `
@@ -60,12 +69,16 @@ app.post('/send-code', async (req, res) => {
             `
         });
         
-        console.log(`📧 Код ${code} отправлен на ${email}`);
+        console.log(`✅ Код ${code} отправлен на ${email}`);
+        console.log(`📧 ID письма: ${info.messageId}`);
         res.json({ success: true });
         
     } catch (error) {
         console.error('❌ Ошибка отправки email:', error);
-        res.status(500).json({ error: 'Не удалось отправить код' });
+        res.status(500).json({ 
+            error: 'Не удалось отправить код. Проверьте настройки почты.',
+            details: error.message
+        });
     }
 });
 
@@ -135,8 +148,10 @@ app.post('/verify-recaptcha', async (req, res) => {
 // ============================================================
 //  ЗАПУСК
 // ============================================================
-app.listen(3000, () => {
+const PORT = 3000;
+app.listen(PORT, () => {
     console.log('🚀 Сервер AURORA запущен!');
-    console.log('📡 Откройте http://localhost:3000');
-    console.log('📧 Email отправка настроена');
+    console.log(`📡 Откройте http://localhost:${PORT}`);
+    console.log('📧 Email: mrcraftluxe@gmail.com');
+    console.log('✅ Готов к отправке писем!');
 });
