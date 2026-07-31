@@ -6,92 +6,56 @@
     <title>AURORA — AI Assistant</title>
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;600;700&display=swap" rel="stylesheet" />
-    
-    <!-- ⭐ Подключаем Google reCAPTCHA (Ваш Site Key) -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-    <!-- СТРАНИЦА РЕГИСТРАЦИИ -->
-    <div class="auth-page" id="authPage">
-        <div class="auth-container">
-            <div class="auth-header">
-                <h1>🌌 AURORA</h1>
-                <p>Войдите, чтобы начать общение</p>
-            </div>
-
-            <!-- КНОПКА ВХОДА ЧЕРЕЗ GOOGLE -->
-            <a href="/auth/google" class="google-btn" id="googleBtn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-                Войти через Google
-            </a>
-
-            <div class="divider">или</div>
-
-            <!-- ФОРМА EMAIL -->
-            <form id="emailForm">
-                <input type="email" id="emailInput" placeholder="Введите ваш email" required />
-                
-                <!-- ⭐ reCAPTCHA v2 (Ваш Site Key) -->
-                <div class="g-recaptcha" data-sitekey="6LfLDW0tAAAAAOLrSk9fCKiAQAb0YzxeGFlvV9DA"></div>
-                
-                <button type="submit" id="sendCodeBtn">Отправить код</button>
-            </form>
-
-            <!-- ПОЛЕ ДЛЯ КОДА -->
-            <div id="codeSection" style="display:none;">
-                <input type="text" id="codeInput" placeholder="Введите 6-значный код" maxlength="6" />
-                <button id="verifyCodeBtn">Войти</button>
-            </div>
-
-            <div id="authStatus" class="auth-status"></div>
-        </div>
-    </div>
-
-    <!-- ОСНОВНОЙ ЧАТ -->
-    <div class="app" id="chatApp" style="display:none;">
+    <div class="app">
+        <!-- ===== БОКОВАЯ ПАНЕЛЬ (СПИСОК ЧАТОВ) ===== -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>🌌 AURORA</h1>
                 <p class="subtitle">AI Assistant</p>
-                <button class="logout-btn" id="logoutBtn">🚪 Выйти</button>
             </div>
-            <div class="settings">
-                <div class="setting-group">
-                    <label>🤖 Модель</label>
-                    <select id="modelSelect">
-                        <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label>🎚️ Температура</label>
-                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" />
-                    <span id="tempValue">0.7</span>
-                </div>
-                <button class="btn-clear" id="clearChatBtn">🗑️ Очистить чат</button>
-                <div class="status" id="status">
-                    <span class="dot"></span>
-                    <span id="statusText">Готов к работе</span>
-                </div>
+
+            <!-- Кнопка "Новый чат" -->
+            <button class="btn-new-chat" id="newChatBtn">
+                <span>➕</span> Новый чат
+            </button>
+
+            <!-- Список чатов -->
+            <div class="chat-list" id="chatList">
+                <!-- Чаты будут создаваться динамически -->
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn-settings" id="settingsBtn">⚙️ Настройки</button>
+                <button class="btn-clear-all" id="clearAllBtn">🗑️ Удалить все чаты</button>
             </div>
         </aside>
 
+        <!-- ===== ОСНОВНАЯ ОБЛАСТЬ (ЧАТ) ===== -->
         <main class="chat-area">
             <header class="chat-header">
                 <button class="menu-toggle" id="menuToggle">☰</button>
-                <h2>AURORA</h2>
-                <span class="model-badge" id="modelBadge">Gemini 1.5 Flash</span>
+                <div class="chat-info">
+                    <h2 id="chatTitle">Новый чат</h2>
+                    <span class="chat-date" id="chatDate">Сегодня</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-delete-chat" id="deleteChatBtn" title="Удалить этот чат">🗑️</button>
+                </div>
             </header>
 
+            <!-- Сообщения -->
             <div class="messages" id="messages">
                 <div class="message bot">
                     <div class="avatar">🌌</div>
                     <div class="bubble">
-                        <p>Добро пожаловать, <span id="userName">друг</span>! ✨</p>
+                        <p>Привет! Я AURORA. Создайте новый чат или выберите существующий, чтобы начать общение ✨</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Ввод -->
             <div class="input-area">
                 <textarea id="userInput" rows="1" placeholder="Спросите AURORA..."></textarea>
                 <button id="sendBtn">➤</button>
@@ -99,6 +63,35 @@
         </main>
     </div>
 
+    <!-- ===== МОДАЛЬНОЕ ОКНО НАСТРОЕК ===== -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>⚙️ Настройки</h2>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>🤖 Модель</label>
+                    <select id="modelSelect">
+                        <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>🎚️ Температура (креативность)</label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" />
+                    <span id="tempValue">0.7</span>
+                </div>
+                <div class="setting-group">
+                    <label>📡 API URL</label>
+                    <input type="text" id="apiUrl" value="https://aurora-api.onrender.com/api/v1/chat" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-close-modal" id="closeSettingsBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
-    </html>
+                    </html>
