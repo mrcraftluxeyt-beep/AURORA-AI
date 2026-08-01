@@ -1,5 +1,5 @@
 // ============================================================
-//  🌌 AURORA — Без регистрации, с системой чатов
+//  🌌 AURORA — ПОЛНАЯ ВЕРСИЯ (ИСПРАВЛЕННАЯ)
 // ============================================================
 
 // ===== СОСТОЯНИЕ =====
@@ -9,7 +9,7 @@ const state = {
     settings: {
         model: 'gemini-1.5-flash',
         temperature: 0.7,
-        apiUrl: 'https://aurora-api.onrender.com/api/v1/chat'
+        apiUrl: 'https://lively-scene-08ef.mrcraftluxe.workers.dev/'
     },
     isProcessing: false
 };
@@ -49,14 +49,18 @@ function loadChats() {
             state.chats = JSON.parse(saved);
             return true;
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('⚠️ Ошибка загрузки чатов:', e);
+    }
     return false;
 }
 
 function saveChats() {
     try {
         localStorage.setItem('aurora_chats', JSON.stringify(state.chats));
-    } catch (e) {}
+    } catch (e) {
+        console.warn('⚠️ Ошибка сохранения чатов:', e);
+    }
 }
 
 // ============================================================
@@ -121,10 +125,7 @@ function renderChatList() {
         });
         
         const infoDiv = document.createElement('div');
-        infoDiv.style.display = 'flex';
-        infoDiv.style.alignItems = 'center';
-        infoDiv.style.gap = '8px';
-        infoDiv.style.flex = '1';
+        infoDiv.style.cssText = 'display:flex; align-items:center; gap:8px; flex:1; min-width:0;';
         infoDiv.appendChild(nameSpan);
         infoDiv.appendChild(timeSpan);
         
@@ -147,11 +148,13 @@ function renderMessages() {
                 </div>
             </div>
         `;
+        dom.chatTitle.textContent = 'Нет чатов';
+        dom.chatDate.textContent = '';
         return;
     }
     
     dom.chatTitle.textContent = chat.name;
-    dom.chatDate.textContent = new Date(chat.createdAt).toLocaleDateString();
+    dom.chatDate.textContent = new Date(chat.createdAt).toLocaleDateString('ru-RU');
     
     dom.messages.innerHTML = '';
     chat.messages.forEach(msg => {
@@ -266,7 +269,6 @@ async function sendMessage() {
     const text = dom.userInput.value.trim();
     if (!text || state.isProcessing) return;
     
-    // Проверяем, есть ли активный чат
     let chat = getCurrentChat();
     if (!chat) {
         chat = createChat(text.substring(0, 30) + '...');
@@ -274,7 +276,6 @@ async function sendMessage() {
         renderChatList();
     }
     
-    // Добавляем сообщение пользователя
     chat.messages.push({ role: 'user', content: text });
     dom.userInput.value = '';
     dom.sendBtn.disabled = true;
@@ -288,7 +289,6 @@ async function sendMessage() {
         renderMessages();
         saveChats();
         
-        // Обновляем название чата, если оно было "Новый чат"
         if (chat.name === 'Новый чат' || chat.name.startsWith('Новый чат')) {
             chat.name = text.substring(0, 30) + (text.length > 30 ? '...' : '');
             renderChatList();
@@ -308,48 +308,60 @@ async function sendMessage() {
 }
 
 // ============================================================
-//  ВЫЗОВ API
+//  🔥 ВЫЗОВ API — ВАШ URL
 // ============================================================
 
 async function callAI(message) {
-    const apiUrl = dom.apiUrl.value.trim() || state.settings.apiUrl;
-    const model = dom.modelSelect.value;
-    const temp = parseFloat(dom.temperature.value);
+    const apiUrl = "https://lively-scene-08ef.mrcraftluxe.workers.dev/";
     
+    // Ваш Worker ожидает { "message": "текст" }
     const payload = {
-        model: model,
-        messages: [
-            { role: 'user', content: message }
-        ],
-        temperature: temp,
-        max_tokens: 2048
+        message: message
     };
     
-    console.log('📤 Отправка:', payload);
+    console.log('📤 Отправка в Worker:', JSON.stringify(payload, null, 2));
+    console.log('📡 URL:', apiUrl);
     
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        console.log('📊 Статус:', response.status);
+        
+        const responseText = await response.text();
+        console.log('📄 Ответ Worker:', responseText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 100)}`);
+        }
+        
+        const data = JSON.parse(responseText);
+        console.log('📥 Данные:', data);
+        
+        // Ваш Worker возвращает { "response": "текст" }
+        let result = data.response || data.text || data.result || data.message;
+        
+        if (!result) {
+            return '⚠️ Пустой ответ от модели. Попробуйте ещё раз.';
+        }
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Ошибка:', error);
+        
+        if (error.message.includes('Failed to fetch')) {
+            return '⚠️ Не удалось подключиться к серверу. Проверьте интернет и URL API.';
+        }
+        
+        return `⚠️ Ошибка: ${error.message}`;
     }
-    
-    const data = await response.json();
-    console.log('📥 Ответ:', data);
-    
-    let result = data.response || data.text || data.result || data.message;
-    if (!result) {
-        result = data.choices?.[0]?.message?.content;
-    }
-    if (!result) {
-        result = '⚠️ Пустой ответ от модели';
-    }
-    
-    return result;
 }
 
 // ============================================================
@@ -368,7 +380,7 @@ function closeSettings() {
     dom.settingsModal.classList.remove('show');
     state.settings.model = dom.modelSelect.value;
     state.settings.temperature = parseFloat(dom.temperature.value);
-    state.settings.apiUrl = dom.apiUrl.value.trim();
+    state.settings.apiUrl = dom.apiUrl.value.trim() || state.settings.apiUrl;
     localStorage.setItem('aurora_settings', JSON.stringify(state.settings));
 }
 
@@ -377,7 +389,6 @@ function closeSettings() {
 // ============================================================
 
 function bindEvents() {
-    // Новая чат
     dom.newChatBtn.addEventListener('click', () => {
         const chat = createChat('Новый чат');
         state.currentChatId = chat.id;
@@ -386,7 +397,6 @@ function bindEvents() {
         dom.userInput.focus();
     });
     
-    // Отправка
     dom.sendBtn.addEventListener('click', sendMessage);
     dom.userInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -399,33 +409,29 @@ function bindEvents() {
         dom.userInput.style.height = Math.min(dom.userInput.scrollHeight, 120) + 'px';
     });
     
-    // Удаление текущего чата
     dom.deleteChatBtn.addEventListener('click', () => {
         if (state.currentChatId) {
             deleteChat(state.currentChatId);
         }
     });
     
-    // Удалить все
     dom.clearAllBtn.addEventListener('click', deleteAllChats);
     
-    // Настройки
     dom.settingsBtn.addEventListener('click', openSettings);
     dom.closeSettingsBtn.addEventListener('click', closeSettings);
     dom.settingsModal.addEventListener('click', (e) => {
         if (e.target === dom.settingsModal) closeSettings();
     });
     
-    // Температура
     dom.temperature.addEventListener('input', () => {
         const val = parseFloat(dom.temperature.value);
         dom.tempValue.textContent = val.toFixed(1);
     });
     
-    // Меню на мобилках
     dom.menuToggle.addEventListener('click', () => {
         dom.sidebar.classList.toggle('open');
     });
+    
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768) {
             const isSidebar = dom.sidebar.contains(e.target);
@@ -444,7 +450,6 @@ function bindEvents() {
 function init() {
     console.log('🚀 AURORA запускается...');
     
-    // Загружаем настройки
     try {
         const savedSettings = localStorage.getItem('aurora_settings');
         if (savedSettings) {
@@ -456,7 +461,6 @@ function init() {
         }
     } catch (e) {}
     
-    // Загружаем чаты
     const hasChats = loadChats();
     
     if (hasChats && state.chats.length > 0) {
@@ -464,7 +468,6 @@ function init() {
         renderChatList();
         renderMessages();
     } else {
-        // Создаём первый чат
         const chat = createChat('Новый чат');
         state.currentChatId = chat.id;
         renderChatList();
@@ -473,6 +476,7 @@ function init() {
     
     bindEvents();
     console.log('✅ AURORA готова!');
+    console.log('📡 URL:', state.settings.apiUrl);
 }
 
 document.addEventListener('DOMContentLoaded', init);
