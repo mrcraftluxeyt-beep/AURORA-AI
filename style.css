@@ -168,49 +168,19 @@ body {
     box-shadow: 0 4px 20px rgba(0, 245, 212, 0.25);
 }
 
-/* ===== НАВИГАЦИЯ ===== */
-.nav-menu {
-    display: flex;
-    gap: 8px;
-    padding: 10px 0 8px;
-    flex-shrink: 0;
-}
-
-.nav-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: #8a8aa0;
-    padding: 6px 18px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.nav-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #d0d0e0;
-}
-
-.nav-btn.active {
-    background: rgba(0, 245, 212, 0.12);
-    border-color: rgba(0, 245, 212, 0.2);
-    color: #00f5d4;
-}
-
 /* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */
 .main-content {
     display: flex;
     gap: 16px;
     flex: 1;
     min-height: 0;
+    margin-top: 12px;
 }
 
 /* ===== БОКОВАЯ ПАНЕЛЬ ===== */
 .sidebar {
     width: 220px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255,  255, 255, 0.03);
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 12px;
@@ -540,14 +510,6 @@ body {
 }
 
 @media (max-width: 480px) {
-    .nav-menu {
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-    .nav-btn {
-        font-size: 12px;
-        padding: 4px 12px;
-    }
     .message .message-avatar {
         width: 28px;
         height: 28px;
@@ -576,4 +538,4 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
-   }
+    }
