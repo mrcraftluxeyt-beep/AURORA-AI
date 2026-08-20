@@ -12,7 +12,6 @@ const chatList = document.getElementById('chatList');
 const newChatBtn = document.getElementById('newChatBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const currentChatName = document.getElementById('currentChatName');
-const navBtns = document.querySelectorAll('.nav-btn');
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 function init() {
@@ -189,7 +188,7 @@ async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text) return;
 
-    // Определяем режим
+    // Определяем режим по тексту
     let mode = 'chat';
     if (text.toLowerCase().startsWith('нарисуй')) {
         mode = 'image';
@@ -228,12 +227,11 @@ async function sendMessage() {
 
         if (mode === 'image') {
             const prompt = text.replace(/^нарисуй/i, '').trim() || 'красивый пейзаж';
-            const result = await generateImage(prompt);
-            if (result.success) {
-                imageUrl = result.url;
+            imageUrl = await generateImage(prompt);
+            if (imageUrl) {
                 responseText = `🎨 *Готово!*\n\nВот что получилось по запросу: "${prompt}"`;
             } else {
-                responseText = `❌ Не удалось создать картинку. Попробуй другой запрос.\n\n${result.error || ''}`;
+                responseText = `❌ Не удалось создать картинку. Попробуй другой запрос.`;
             }
         } else if (mode === 'code') {
             const codeQuery = text.replace(/^код/i, '').trim() || 'телеграм бот';
@@ -276,11 +274,11 @@ async function generateImage(prompt) {
     try {
         const response = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`);
         if (response.ok) {
-            return { success: true, url: response.url };
+            return response.url;
         }
-        return { success: false, error: 'Сервис недоступен' };
+        return null;
     } catch (e) {
-        return { success: false, error: e.message };
+        return null;
     }
 }
 
@@ -293,7 +291,7 @@ async function generateCode(query) {
         'requests': `\`\`\`python\n# HTTP запросы\nimport requests\n\nresponse = requests.get('https://api.example.com/data')\ndata = response.json()\nprint(data)\n\`\`\``
     };
 
-    for (key, value) of Object.entries(codes)) {
+    for (const [key, value] of Object.entries(codes)) {
         if (q.includes(key)) {
             return value;
         }
@@ -361,22 +359,6 @@ function setupEventListeners() {
         saveToStorage();
     });
     clearAllBtn.addEventListener('click', clearAllChats);
-
-    // Навигация
-    navBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            navBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const mode = btn.dataset.mode;
-            if (mode === 'chat') {
-                messageInput.placeholder = 'Напиши сообщение...';
-            } else if (mode === 'image') {
-                messageInput.placeholder = 'Опиши что нарисовать... (нарисуй кот в космосе)';
-            } else if (mode === 'code') {
-                messageInput.placeholder = 'Какой код нужен? (код телеграм бот)';
-            }
-        });
-    });
 }
 
 // ===== ЗАПУСК =====
