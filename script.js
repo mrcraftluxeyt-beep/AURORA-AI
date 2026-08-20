@@ -13,6 +13,8 @@ const newChatBtn = document.getElementById('newChatBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const currentChatName = document.getElementById('currentChatName');
 
+console.log('✅ Aurora AI загружен!');
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 function init() {
     loadFromStorage();
@@ -27,6 +29,7 @@ function init() {
     }
     setupEventListeners();
     updateStatus();
+    console.log('✅ Инициализация завершена, чатов:', chats.length);
 }
 
 // ===== РАБОТА С ХРАНИЛИЩЕМ =====
@@ -34,7 +37,9 @@ function saveToStorage() {
     try {
         localStorage.setItem('aurora_chats', JSON.stringify(chats));
         localStorage.setItem('aurora_counter', String(chatCounter));
-    } catch (e) {}
+    } catch (e) {
+        console.log('⚠️ Ошибка сохранения:', e);
+    }
 }
 
 function loadFromStorage() {
@@ -49,6 +54,7 @@ function loadFromStorage() {
         }
     } catch (e) {
         chats = [];
+        console.log('⚠️ Ошибка загрузки:', e);
     }
 }
 
@@ -74,6 +80,7 @@ function createNewChat() {
     updateCurrentChatName();
     saveToStorage();
     scrollToBottom();
+    console.log('✅ Создан новый чат:', newChat.name);
 }
 
 // ===== ОТРИСОВКА СПИСКА ЧАТОВ =====
@@ -91,16 +98,17 @@ function renderChatList() {
 
     // Обработчики для чатов
     document.querySelectorAll('.chat-item').forEach(item => {
-        item.addEventListener('click', (e) => {
+        item.addEventListener('click', function(e) {
             if (e.target.classList.contains('chat-delete')) return;
-            const id = parseInt(item.dataset.id);
+            const id = parseInt(this.dataset.id);
             switchChat(id);
         });
+        
         const deleteBtn = item.querySelector('.chat-delete');
         if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
+            deleteBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                const id = parseInt(deleteBtn.dataset.id);
+                const id = parseInt(this.dataset.id);
                 deleteChat(id);
             });
         }
@@ -117,6 +125,7 @@ function switchChat(id) {
     renderMessages(id);
     updateCurrentChatName();
     scrollToBottom();
+    console.log('🔄 Переключен на чат:', chat.name);
 }
 
 // ===== УДАЛЕНИЕ ЧАТА =====
@@ -134,6 +143,7 @@ function deleteChat(id) {
     updateCurrentChatName();
     saveToStorage();
     scrollToBottom();
+    console.log('🗑️ Чат удален');
 }
 
 // ===== ОЧИСТКА ВСЕХ ЧАТОВ =====
@@ -144,12 +154,16 @@ function clearAllChats() {
     chatCounter = 0;
     createNewChat();
     saveToStorage();
+    console.log('🗑️ Все чаты удалены');
 }
 
 // ===== ОТРИСОВКА СООБЩЕНИЙ =====
 function renderMessages(chatId) {
     const chat = chats.find(c => c.id === chatId);
-    if (!chat) return;
+    if (!chat) {
+        console.log('⚠️ Чат не найден:', chatId);
+        return;
+    }
     messagesContainer.innerHTML = chat.messages.map(msg => {
         const isUser = msg.role === 'user';
         const text = msg.text || '';
@@ -178,21 +192,35 @@ function updateCurrentChatName() {
 // ===== ПРОКРУТКА ВНИЗ =====
 function scrollToBottom() {
     setTimeout(() => {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 50);
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }, 100);
 }
 
 // ===== ОТПРАВКА СООБЩЕНИЯ =====
 async function sendMessage() {
-    if (isProcessing) return;
+    console.log('📤 Отправка сообщения...');
+    
+    if (isProcessing) {
+        console.log('⏳ Уже обрабатывается');
+        return;
+    }
+    
     const text = messageInput.value.trim();
-    if (!text) return;
+    if (!text) {
+        console.log('⚠️ Пустое сообщение');
+        return;
+    }
+
+    console.log('📝 Текст:', text);
 
     // Определяем режим по тексту
     let mode = 'chat';
-    if (text.toLowerCase().startsWith('нарисуй')) {
+    const lowerText = text.toLowerCase();
+    if (lowerText.startsWith('нарисуй')) {
         mode = 'image';
-    } else if (text.toLowerCase().startsWith('код')) {
+    } else if (lowerText.startsWith('код')) {
         mode = 'code';
     }
 
@@ -205,12 +233,17 @@ async function sendMessage() {
         text: text,
         time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     };
+    
     const chat = chats.find(c => c.id === currentChatId);
-    if (chat) {
-        chat.messages.push(userMsg);
-        renderMessages(currentChatId);
-        saveToStorage();
+    if (!chat) {
+        console.log('⚠️ Чат не найден');
+        isProcessing = false;
+        return;
     }
+    
+    chat.messages.push(userMsg);
+    renderMessages(currentChatId);
+    saveToStorage();
 
     // Добавляем индикатор загрузки
     const loadingMsg = {
@@ -227,6 +260,7 @@ async function sendMessage() {
 
         if (mode === 'image') {
             const prompt = text.replace(/^нарисуй/i, '').trim() || 'красивый пейзаж';
+            console.log('🎨 Генерация картинки:', prompt);
             imageUrl = await generateImage(prompt);
             if (imageUrl) {
                 responseText = `🎨 *Готово!*\n\nВот что получилось по запросу: "${prompt}"`;
@@ -235,8 +269,10 @@ async function sendMessage() {
             }
         } else if (mode === 'code') {
             const codeQuery = text.replace(/^код/i, '').trim() || 'телеграм бот';
+            console.log('💻 Генерация кода:', codeQuery);
             responseText = await generateCode(codeQuery);
         } else {
+            console.log('💬 Поиск ответа на вопрос');
             responseText = await getAIResponse(text);
         }
 
@@ -253,8 +289,10 @@ async function sendMessage() {
         chat.messages.push(botMsg);
         renderMessages(currentChatId);
         saveToStorage();
+        console.log('✅ Ответ отправлен');
 
     } catch (error) {
+        console.log('❌ Ошибка:', error);
         chat.messages.pop();
         chat.messages.push({
             role: 'bot',
@@ -272,12 +310,15 @@ async function sendMessage() {
 // ===== ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЯ =====
 async function generateImage(prompt) {
     try {
-        const response = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`);
+        const encoded = encodeURIComponent(prompt);
+        const url = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+        const response = await fetch(url);
         if (response.ok) {
             return response.url;
         }
         return null;
     } catch (e) {
+        console.log('❌ Ошибка генерации картинки:', e);
         return null;
     }
 }
@@ -331,7 +372,9 @@ async function getAIResponse(question) {
         if (data.Answer) {
             return `💡 *Ответ:*\n\n${data.Answer}`;
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log('⚠️ Ошибка DuckDuckGo:', e);
+    }
 
     return `🌐 *Не нашел информации.*\n\n💡 Попробуй:\n• Переформулировать вопрос\n• Спросить на английском\n• Задать более конкретный вопрос`;
 }
@@ -339,27 +382,62 @@ async function getAIResponse(question) {
 // ===== СТАТУС =====
 function updateStatus() {
     const badge = document.getElementById('statusBadge');
-    const dot = badge.querySelector('.status-dot');
-    badge.innerHTML = `<span class="status-dot"></span> Онлайн`;
-    badge.prepend(dot);
+    if (badge) {
+        badge.innerHTML = `<span class="status-dot"></span> Онлайн`;
+    }
 }
 
 // ===== СОБЫТИЯ =====
 function setupEventListeners() {
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+    console.log('🔧 Настройка обработчиков...');
+    
+    // Отправка по клику на кнопку
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('🖱️ Нажата кнопка отправки');
             sendMessage();
-        }
-    });
-    newChatBtn.addEventListener('click', () => {
-        createNewChat();
-        renderChatList();
-        saveToStorage();
-    });
-    clearAllBtn.addEventListener('click', clearAllChats);
+        });
+    }
+    
+    // Отправка по Enter
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                console.log('⌨️ Нажат Enter');
+                sendMessage();
+            }
+        });
+    }
+    
+    // Новый чат
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', function() {
+            console.log('➕ Создание нового чата');
+            createNewChat();
+        });
+    }
+    
+    // Очистка всех чатов
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            console.log('🗑️ Очистка всех чатов');
+            clearAllChats();
+        });
+    }
+    
+    console.log('✅ Обработчики настроены');
 }
 
 // ===== ЗАПУСК =====
-init();
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM загружен');
+    init();
+});
+
+// Если DOM уже загружен
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    console.log('📄 DOM уже загружен');
+    init();
+}
