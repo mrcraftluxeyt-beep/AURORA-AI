@@ -3,81 +3,65 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aurora AI — Искусственный интеллект</title>
+    <title>AURORA AI</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="stars"></div>
-    <div class="aurora-bg"></div>
-    <div class="container">
-        <!-- Шапка -->
-        <header class="header">
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
             <div class="logo">
-                <span class="logo-icon">🌌</span>
-                <span class="logo-text">Aurora AI</span>
+                <span class="aurora-icon">✦</span>
+                <h1>AURORA AI</h1>
             </div>
-            <div class="header-right">
-                <span class="status-badge" id="statusBadge">
+            <button class="new-chat-btn" id="newChatBtn">
+                <span>✧</span> Новый чат
+            </button>
+            <div class="chat-list" id="chatList">
+                <!-- Список чатов будет генерироваться JS -->
+            </div>
+            <div class="sidebar-footer">
+                <div class="status">
                     <span class="status-dot"></span>
-                    Онлайн
-                </span>
-                <button class="btn-new-chat" id="newChatBtn">➕ Новый чат</button>
+                    <span>API: активен</span>
+                </div>
             </div>
-        </header>
+        </aside>
 
-        <!-- Основная область -->
-        <main class="main-content">
-            <!-- Боковая панель с чатами -->
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <span>📋 История</span>
-                    <button class="btn-clear-all" id="clearAllBtn">Очистить все</button>
+        <!-- Main -->
+        <main class="main">
+            <header class="chat-header">
+                <div class="header-info">
+                    <span class="model-badge">✦ AURORA 1.0</span>
+                    <span class="context-info">Контекст: 8K</span>
                 </div>
-                <div class="chat-list" id="chatList">
-                    <!-- Чаты будут добавляться сюда -->
-                </div>
-            </aside>
+            </header>
 
-            <!-- Область чата -->
-            <section class="chat-area">
-                <div class="chat-header">
-                    <span id="currentChatName">Чат #1</span>
-                    <span class="chat-status">🟢 активно</span>
-                </div>
-
-                <div class="messages-container" id="messagesContainer">
-                    <div class="message bot">
-                        <div class="message-avatar">🌌</div>
-                        <div class="message-content">
-                            <div class="message-text">
-                                Привет! Я <strong>Aurora AI</strong>!<br />
-                                Задавай вопросы, проси нарисовать картинку или показать код! 🚀
-                            </div>
-                            <div class="message-time">только что</div>
-                        </div>
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">⌛</div>
+                    <h2>Привет, я AURORA AI</h2>
+                    <p>Чем могу помочь тебе сегодня?</p>
+                    <div class="suggestions">
+                        <button class="suggestion-btn">Напиши код</button>
+                        <button class="suggestion-btn">Объясни сложное</button>
+                        <button class="suggestion-btn">Придумай идею</button>
                     </div>
                 </div>
+                <div id="messages"></div>
+            </div>
 
-                <!-- Поле ввода -->
-                <div class="input-area">
-                    <div class="input-wrapper">
-                        <input
-                            type="text"
-                            id="messageInput"
-                            placeholder="Напиши сообщение..."
-                            autofocus
-                        />
-                        <button class="btn-send" id="sendBtn">➤</button>
-                    </div>
-                    <div class="input-hint">
-                        <span>💡</span>
-                        <span>
-                            <kbd>нарисуй</kbd> кот в космосе &bull;
-                            <kbd>код</kbd> телеграм бот
-                        </span>
-                    </div>
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="userInput" rows="1" placeholder="Спроси меня о чем угодно..."></textarea>
+                    <button id="sendBtn" class="send-btn">
+                        <span>➤</span>
+                    </button>
                 </div>
-            </section>
+                <div class="input-footer">
+                    <span>AURORA AI может ошибаться</span>
+                </div>
+            </div>
         </main>
     </div>
 
