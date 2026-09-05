@@ -2,67 +2,55 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>AURORA AI</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <div id="app">
+        <header>
             <div class="logo">
-                <span class="aurora-icon">✦</span>
-                <h1>AURORA AI</h1>
+                <span class="icon">✦</span>
+                <h1>AURORA <span>AI</span></h1>
             </div>
-            <button class="new-chat-btn" id="newChatBtn">
-                <span>✧</span> Новый чат
-            </button>
-            <div class="chat-list" id="chatList">
-                <!-- Список чатов будет генерироваться JS -->
+            <div class="status">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Подключение...</span>
             </div>
-            <div class="sidebar-footer">
-                <div class="status">
-                    <span class="status-dot"></span>
-                    <span>API: активен</span>
-                </div>
-            </div>
-        </aside>
+        </header>
 
-        <!-- Main -->
-        <main class="main">
-            <header class="chat-header">
-                <div class="header-info">
-                    <span class="model-badge">✦ AURORA 1.0</span>
-                    <span class="context-info">Контекст: 8K</span>
-                </div>
-            </header>
-
-            <div class="messages-container" id="messagesContainer">
-                <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-icon">⌛</div>
-                    <h2>Привет, я AURORA AI</h2>
-                    <p>Чем могу помочь тебе сегодня?</p>
-                    <div class="suggestions">
-                        <button class="suggestion-btn">Напиши код</button>
-                        <button class="suggestion-btn">Объясни сложное</button>
-                        <button class="suggestion-btn">Придумай идею</button>
-                    </div>
-                </div>
-                <div id="messages"></div>
+        <div id="chatContainer">
+            <div id="messages"></div>
+            <div id="typingIndicator" class="hidden">
+                <span>AURORA печатает</span>
+                <span class="dots">...</span>
             </div>
+        </div>
 
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <textarea id="userInput" rows="1" placeholder="Спроси меня о чем угодно..."></textarea>
-                    <button id="sendBtn" class="send-btn">
-                        <span>➤</span>
-                    </button>
-                </div>
-                <div class="input-footer">
-                    <span>AURORA AI может ошибаться</span>
-                </div>
+        <div id="inputArea">
+            <div style="display: flex; gap: 0.6rem; width: 100%;">
+                <input type="text" id="userInput" placeholder="Спросите что-нибудь..." autofocus />
+                <button id="sendBtn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
             </div>
-        </main>
+        </div>
+    </div>
+
+    <!-- Контекстное меню -->
+    <div id="contextMenu" class="hidden">
+        <div class="menu-item" data-action="copy">⎘ Копировать</div>
+        <div class="menu-item" data-action="edit">✎ Редактировать</div>
+        <div class="menu-item" data-action="delete">✕ Удалить</div>
+        <div class="menu-item" data-action="regenerate">⟳ Повторить</div>
+        <div class="menu-divider"></div>
+        <div class="menu-item" data-action="react1">(◕‿◕) ❤️</div>
+        <div class="menu-item" data-action="react2">(｡♥‿♥｡) 🔥</div>
+        <div class="menu-item" data-action="react3">(╯°□°)╯ 🚀</div>
+        <div class="menu-item" data-action="react4">ᕙ(⇀‸↼‶)ᕗ 💪</div>
+        <div class="menu-item" data-action="react5">(づ｡◕‿‿◕｡)づ 🌟</div>
     </div>
 
     <script src="script.js"></script>
