@@ -277,23 +277,23 @@ document.querySelectorAll('.menu-item').forEach(item => {
                 break;
                 
             case 'react1':
-                addReaction(selectedMessageId, '(◕‿◕) ❤️');
+                addReaction(selectedMessageId, ' ❤️');
                 showToast('❤️');
                 break;
             case 'react2':
-                addReaction(selectedMessageId, '(｡♥‿♥｡) 🔥');
+                addReaction(selectedMessageId, ' 🔥');
                 showToast('🔥');
                 break;
             case 'react3':
-                addReaction(selectedMessageId, '(╯°□°)╯ 🚀');
+                addReaction(selectedMessageId, ' 🚀');
                 showToast('🚀');
                 break;
             case 'react4':
-                addReaction(selectedMessageId, 'ᕙ(⇀‸↼‶)ᕗ 💪');
+                addReaction(selectedMessageId, ' 💪');
                 showToast('💪');
                 break;
             case 'react5':
-                addReaction(selectedMessageId, '(づ｡◕‿‿◕｡)づ 🌟');
+                addReaction(selectedMessageId, ' 🌟');
                 showToast('🌟');
                 break;
         }
