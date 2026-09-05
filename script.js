@@ -1,6 +1,6 @@
 // ====== КОНФИГ ======
-const API_URL = "https://myaitop4.nport.link/api/generate";
-const MODEL = "qwen2.5:3b";
+const API_URL = 'https://ollama123.shares.zrok.io/api/generate'
+const MODEL = 'qwen2.5:3b';
 const USE_FALLBACK = true;
 
 // ====== DOM ======
